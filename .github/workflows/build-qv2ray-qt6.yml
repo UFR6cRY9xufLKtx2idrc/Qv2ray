@@ -15,7 +15,7 @@ jobs:
     name: Check if the workflow has been disabled.
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - name: Get commit message
         id: get_message
         run: |
@@ -28,8 +28,8 @@ jobs:
       matrix:
         ui_type: [QWidget, QML]
         platform: [windows-latest]
-        build_type: [RelWithDebInfo, Release]
-        qt_version: [6.0.0]
+        build_type: [Release]
+        qt_version: [6.4.1]
         include:
           - platform: windows-latest
             qtarch: win64_msvc2019_64
@@ -47,7 +47,7 @@ jobs:
         shell: bash
         run: echo ::set-output name=VERSION::$(echo $GITHUB_REF | cut -d / -f 3)
       - name: Checking out sources
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           submodules: "recursive"
       # =========================================================================================================
@@ -56,7 +56,7 @@ jobs:
         uses: ilammy/msvc-dev-cmd@v1
         with:
           # 14.1 is for vs2017, 14.2 is vs2019, following the upstream vcpkg build from Qv2ray-deps repo
-          toolset: 14.2
+          toolset: 14.29
           arch: x64
       - name: Setup Python
         uses: actions/setup-python@v4
@@ -65,12 +65,12 @@ jobs:
           architecture: x64
       - name: Cache Qt
         id: cache-qt
-        uses: actions/cache@v1
+        uses: actions/cache@v3
         with:
           path: ../Qt
           key: QtCache-${{ matrix.platform }}-${{ matrix.qt_version }}
       - name: Installing Qt
-        uses: jurplel/install-qt-action@v2
+        uses: jurplel/install-qt-action@v3
         with:
           version: ${{ matrix.qt_version }}
           arch: ${{ matrix.qtarch }}
@@ -170,7 +170,7 @@ jobs:
           cmake --install .
       # ========================================================================================================= Deployments
       - name: Linux - ${{ matrix.qt_version }} - Generating AppImage
-        if: false #matrix.platform == 'ubuntu-latest'
+        if: matrix.platform == 'ubuntu-latest'
         run: |
           cd build
           cd AppDir
@@ -194,18 +194,17 @@ jobs:
             -extra-plugins=iconengines,imageformats,platforminputcontexts
           mv ./Qv2ray*.AppImage ./Qv2ray.AppImage
       - name: Linux - ${{ matrix.qt_version }} - Uploading Artifact
-        if: false #matrix.platform == 'ubuntu-latest'
+        if: matrix.platform == 'ubuntu-latest'
         uses: actions/upload-artifact@v3
         with:
           name: Qv2ray-${{ github.sha }}.linux-${{ matrix.ui_type }}.qt${{ matrix.qt_version }}-${{ matrix.build_type }}.AppImage
           path: build/Qv2ray.AppImage
       - name: Linux - ${{ matrix.qt_version }} - Upload binaries to release
         uses: svenstaro/upload-release-action@v2
-        if: false #github.event_name == 'release' && matrix.platform == 'ubuntu-latest' && matrix.ui_type == 'QWidget' && matrix.qt_version == '6.0.0' && matrix.build_type == 'Release'
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
           file: build/Qv2ray.AppImage
-          asset_name: Qv2ray.${{ steps.get_version.outputs.VERSION }}.Qt6.Linux.AppImage
+          asset_name: Qv2ray.${{ steps.get_version.outputs.VERSION }}.Qt6.Linux-${{ matrix.ui_type }}.AppImage
           tag: ${{ github.ref }}
           overwrite: true
       # --------------------------------------------------------
@@ -217,11 +216,10 @@ jobs:
           path: Qv2ray.dmg
       - name: macOS - ${{ matrix.qt_version }} - Upload binaries to release
         uses: svenstaro/upload-release-action@v2
-        if: github.event_name == 'release' && matrix.platform == 'macos-latest' && matrix.ui_type == 'QWidget' && matrix.qt_version == '6.0.0' && matrix.build_type == 'Release'
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
           file: Qv2ray.dmg
-          asset_name: Qv2ray.${{ steps.get_version.outputs.VERSION }}.Qt6.macOS.dmg
+          asset_name: Qv2ray.${{ steps.get_version.outputs.VERSION }}.Qt6.macOS-${{ matrix.ui_type }}.dmg
           tag: ${{ github.ref }}
           overwrite: true
       # --------------------------------------------------------
@@ -239,10 +237,9 @@ jobs:
           path: release.7z
       - name: Win - ${{ matrix.qt_version }} - Upload binaries to release
         uses: svenstaro/upload-release-action@v2
-        if: github.event_name == 'release' && matrix.platform == 'windows-latest' && matrix.ui_type == 'QWidget' && matrix.qt_version == '6.0.0' && matrix.build_type == 'Release'
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
           file: release.7z
-          asset_name: Qv2ray.${{ steps.get_version.outputs.VERSION }}.Qt6.Windows.7z
+          asset_name: Qv2ray.${{ steps.get_version.outputs.VERSION }}.Qt6.Windows-${{ matrix.ui_type }}.7z
           tag: ${{ github.ref }}
           overwrite: true
