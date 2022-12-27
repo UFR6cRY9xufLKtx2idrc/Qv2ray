@@ -5,11 +5,17 @@
 #include "utils/QvHelpers.hpp"
 
 #include <QProcess>
-#include <QRegularExpression>
-#include <QRegularExpressionMatch>
 
 #define QV2RAY_GENERATED_FILE_PATH (QV2RAY_GENERATED_DIR + "config.gen.json")
 #define QV_MODULE_NAME "V2RayInteraction"
+
+#ifdef QV2RAY_USE_V5_CORE
+#define V2RAY_CORE_VERSION_ARGV "version"
+#define V2RAY_CORE_CONFIG_ARGV "run", "-config"
+#else
+#define V2RAY_CORE_VERSION_ARGV "--version"
+#define V2RAY_CORE_CONFIG_ARGV "--config"
+#endif
 
 namespace Qv2ray::core::kernel
 {
@@ -53,46 +59,7 @@ namespace Qv2ray::core::kernel
     }
 #endif
 
-    void KernelVersioning_(QString const& output) {
-        QRegularExpression versionRegex{R"(^(\w+) (\d+)\.(\d+)\.(\d+))"}; // other v2ray-core, e.g., xray, will be treated as version4
-        auto match = versionRegex.match(output);
-        if (match.hasMatch()) {
-            auto ray = match.captured(1);
-            auto majorVersion = match.captured(2).toInt();
-            LOG(QString("core %1 with major version %2").arg(ray).arg(majorVersion));
-            if (ray != "V2Ray" || majorVersion == 4) {
-                GlobalConfig.kernelConfig.version = Qv2rayConfig_Kernel::FOUR;
-            } else if (majorVersion == 5) {
-                GlobalConfig.kernelConfig.version = Qv2rayConfig_Kernel::FIVE;
-            }
-        } else {
-            // otherwise, version is unknown.
-            GlobalConfig.kernelConfig.version = Qv2rayConfig_Kernel::UNKNOWN;
-        }
-    }
-
-    std::pair<int, QString> RunProcess_(QString const& exec, QStringList const& args) {
-        QProcess proc;
-#ifdef Q_OS_WIN32
-        // nativeArguments are required for Windows platform, without a
-        // reason...
-        proc.setProcessChannelMode(QProcess::MergedChannels);
-        proc.setProgram(exec);
-        proc.setNativeArguments(args);
-        proc.start();
-#else
-        proc.start(exec, args);
-#endif
-        proc.waitForStarted();
-        proc.waitForFinished();
-        auto exitCode = proc.exitCode();
-
-        auto output = exitCode == 0 ? proc.readAllStandardOutput() : proc.readAllStandardError();
-
-        return { exitCode, output };
-    }
-
-    std::pair<bool, std::optional<QString>> V2RayKernelInstance::ValidateVersionedKernel(const QString &corePath, const QString &assetsPath)
+    std::pair<bool, std::optional<QString>> V2RayKernelInstance::ValidateKernel(const QString &corePath, const QString &assetsPath)
     {
         QFile coreFile(corePath);
 
@@ -167,37 +134,29 @@ namespace Qv2ray::core::kernel
             return { false, tr("No geosite.dat in assets path.") };
 
         // Check if V2Ray core returns a version number correctly.
-        auto [exitCode, output] = RunProcess_(corePath, {"--version"});
+        QProcess proc;
+#ifdef Q_OS_WIN32
+        // nativeArguments are required for Windows platform, without a
+        // reason...
+        proc.setProcessChannelMode(QProcess::MergedChannels);
+        proc.setProgram(corePath);
+        proc.setNativeArguments(V2RAY_CORE_VERSION_ARGV);
+        proc.start();
+#else
+        proc.start(corePath, { V2RAY_CORE_VERSION_ARGV });
+#endif
+        proc.waitForStarted();
+        proc.waitForFinished();
+        auto exitCode = proc.exitCode();
 
-        LOG("V2Ray output: " + SplitLines(output).join(";"));
-
-        if (exitCode == 0)
-        {
-            LOG("V2Ray output: " + SplitLines(output).join(";"));
-
-            if (SplitLines(output).isEmpty())
-                return { false, tr("V2Ray core returns empty string.") };
-
-            KernelVersioning_(output);
-            return { true, SplitLines(output).at(0) };
-        }
-
-        if (output.startsWith("flag provided but not defined"))
-        {
-            // find 5.0+ cli api
-            std::tie(exitCode, output) = RunProcess_(corePath, {"version"});
-            if (exitCode != 0)
-                return { false, tr("V2Ray core failed with an exit code: ") + QSTRN(exitCode) };
-
-            LOG("V2Ray output: " + SplitLines(output).join(";"));
-        } else {
+        if (exitCode != 0)
             return { false, tr("V2Ray core failed with an exit code: ") + QSTRN(exitCode) };
-        }
+
+        const auto output = proc.readAllStandardOutput();
+        LOG("V2Ray output: " + SplitLines(output).join(";"));
 
         if (SplitLines(output).isEmpty())
             return { false, tr("V2Ray core returns empty string.") };
-
-        KernelVersioning_(output);
 
         return { true, SplitLines(output).at(0) };
     }
@@ -206,33 +165,22 @@ namespace Qv2ray::core::kernel
     {
         const auto kernelPath = GlobalConfig.kernelConfig.KernelPath();
         const auto assetsPath = GlobalConfig.kernelConfig.AssetsPath();
-        if (const auto &[result, msg] = ValidateVersionedKernel(kernelPath, assetsPath); result)
+        if (const auto &[result, msg] = ValidateKernel(kernelPath, assetsPath); result)
         {
             DEBUG("V2Ray version: " + *msg);
             // Append assets location env.
             auto env = QProcessEnvironment::systemEnvironment();
-            auto version = GlobalConfig.kernelConfig.version;
             env.insert("v2ray.location.asset", assetsPath);
             env.insert("XRAY_LOCATION_ASSET", assetsPath);
             //
             QProcess process;
             process.setProcessEnvironment(env);
             DEBUG("Starting V2Ray core with test options");
-            QStringList args;
-            switch (version)
-            {
-                case Qv2rayConfig_Kernel::FOUR: args = QStringList{ "-test", "-config", path }; break;
-                case Qv2rayConfig_Kernel::FIVE: args = QStringList{ "test", "-config", path }; break;
-                case Qv2rayConfig_Kernel::UNKNOWN:
-                {
-                    // actually impossible, cause `ValidateConfig`'s already
-                    // checked the kernel
-                    LOG("Kernel versioning failed, unknown reason.");
-                    return tr("Can not determine the version of v2ray kernel.");
-                };
-                default: break; // TODO: mark as unreachable
-            }
-            process.start(kernelPath, args, QIODevice::ReadWrite | QIODevice::Text);
+#ifdef QV2RAY_USE_V5_CORE
+            process.start(kernelPath, { "test", "-c", path }, QIODevice::ReadWrite | QIODevice::Text);
+#else
+            process.start(kernelPath, { "-test", "-config", path }, QIODevice::ReadWrite | QIODevice::Text);
+#endif
             process.waitForFinished();
 
             if (process.exitCode() != 0)
@@ -296,22 +244,7 @@ namespace Qv2ray::core::kernel
         env.insert("v2ray.location.asset", GlobalConfig.kernelConfig.AssetsPath());
         env.insert("XRAY_LOCATION_ASSET", GlobalConfig.kernelConfig.AssetsPath());
         vProcess->setProcessEnvironment(env);
-        auto version = GlobalConfig.kernelConfig.version;
-        QStringList args;
-        switch (version)
-        {
-            case Qv2rayConfig_Kernel::FOUR: args = QStringList{ "-config", filePath }; break;
-            case Qv2rayConfig_Kernel::FIVE: args = QStringList{ "run", "-config", filePath }; break;
-            case Qv2rayConfig_Kernel::UNKNOWN:
-            {
-                // actually impossible, cause `ValidateConfig`'s already
-                // checked the kernel
-                LOG("Kernel versioning failed, unknown reason.");
-                return tr("Can not determine the version of v2ray kernel.");
-            };
-            default: break; // TODO: mark as unreachable
-        }
-        vProcess->start(GlobalConfig.kernelConfig.KernelPath(), args, QIODevice::ReadWrite | QIODevice::Text);
+        vProcess->start(GlobalConfig.kernelConfig.KernelPath(), { V2RAY_CORE_CONFIG_ARGV, filePath }, QIODevice::ReadWrite | QIODevice::Text);
         vProcess->waitForStarted();
         kernelStarted = true;
 
