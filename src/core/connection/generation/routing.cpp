@@ -36,7 +36,6 @@ namespace Qv2ray::core::connection::generation::routing
     {
         ROUTING root;
         root.insert("domainStrategy", routeConfig.domainStrategy);
-        root.insert("domainMatcher", routeConfig.domainMatcher);
         //
         // For Rules list
         QJsonArray rulesList;
