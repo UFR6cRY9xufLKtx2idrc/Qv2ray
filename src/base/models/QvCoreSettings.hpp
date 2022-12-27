@@ -24,8 +24,8 @@ namespace Qv2ray::base::config
         QvConfig_Route(){};
         QvConfig_Route(const QvRouteConfig_Impl &_domains, const QvRouteConfig_Impl &_ips, const QString &ds)
             : domainStrategy(ds), domains(_domains), ips(_ips){};
-        JSONSTRUCT_COMPARE(QvConfig_Route, domainStrategy, domainMatcher, domains, ips)
-        JSONSTRUCT_REGISTER(QvConfig_Route, A(domainStrategy, domainMatcher, domains, ips))
+        JSONSTRUCT_COMPARE(QvConfig_Route, domainStrategy, domains, ips)
+        JSONSTRUCT_REGISTER(QvConfig_Route, A(domainStrategy, domains, ips))
     };
 
     using QvConfig_DNS = objects::DNSObject;
