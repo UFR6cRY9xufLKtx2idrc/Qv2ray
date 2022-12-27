@@ -293,7 +293,21 @@ CONFIGROOT RouteEditor::OpenEditor()
     }
     root["outbounds"] = outboundsArray;
     // Process DNS
-    root["dns"] = GenerateDNS(false, dnsWidget->GetDNSObject());
+    const auto &[dns] = dnsWidget->GetDNSObject();
+    root["dns"] = GenerateDNS(dns);
+    {
+        // Process Browser Forwarder
+        QJsonObject browserForwarder;
+        browserForwarder["listenAddr"] = bfListenIPTxt->text();
+        browserForwarder["listenPort"] = bfListenPortTxt->value();
+        root["browserForwarder"] = browserForwarder;
+    }
+    {
+        // Process Observatory
+        QJsonObject observatory;
+        observatory["subjectSelector"] = QJsonArray::fromStringList(SplitLines(obSubjectSelectorTxt->toPlainText()));
+        root["observatory"] = observatory;
+    }
     return root;
 }
 
