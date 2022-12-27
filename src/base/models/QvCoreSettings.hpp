@@ -30,6 +30,7 @@ namespace Qv2ray::base::config
     };
 
     using QvConfig_DNS = objects::DNSObject;
+    using QvConfig_FakeDNS = objects::FakeDNSObject;
 
     struct QvConfig_Outbounds
     {
