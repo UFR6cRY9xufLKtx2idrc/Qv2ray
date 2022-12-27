@@ -294,22 +294,6 @@ CONFIGROOT RouteEditor::OpenEditor()
     root["outbounds"] = outboundsArray;
     // Process DNS
     root["dns"] = GenerateDNS(false, dnsWidget->GetDNSObject());
-    {
-        // Process Browser Forwarder
-        if (!bfListenIPTxt->text().trimmed().isEmpty())
-        {
-            root["browserForwarder"] = QJsonObject{
-                { "listenAddr", bfListenIPTxt->text() },
-                { "listenPort", bfListenPortTxt->value() },
-            };
-        }
-    }
-    {
-        // Process Observatory
-        QJsonObject observatory;
-        observatory["subjectSelector"] = QJsonArray::fromStringList(SplitLines(obSubjectSelectorTxt->toPlainText()));
-        root["observatory"] = observatory;
-    }
     return root;
 }
 
