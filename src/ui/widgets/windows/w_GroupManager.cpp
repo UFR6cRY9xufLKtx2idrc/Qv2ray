@@ -341,8 +341,7 @@ void GroupManager::on_buttonBox_accepted()
     if (currentGroupId != NullGroupId)
     {
         const auto routeId = ConnectionManager->GetGroupRoutingId(currentGroupId);
-        const auto &[dns] = dnsSettingsWidget->GetDNSObject();
-        RouteManager->SetDNSSettings(routeId, dnsSettingsGB->isChecked(), dns);
+        RouteManager->SetDNSSettings(routeId, dnsSettingsGB->isChecked(), dnsSettingsWidget->GetDNSObject());
         RouteManager->SetAdvancedRouteSettings(routeId, routeSettingsGB->isChecked(), routeSettingsWidget->GetRouteConfig());
     }
     // Nothing?
@@ -443,8 +442,7 @@ void GroupManager::on_groupList_currentItemChanged(QListWidgetItem *current, QLi
     if (priv)
     {
         const auto group = ConnectionManager->GetGroupMetaObject(currentGroupId);
-        const auto &[dns] = dnsSettingsWidget->GetDNSObject();
-        RouteManager->SetDNSSettings(group.routeConfigId, dnsSettingsGB->isChecked(), dns);
+        RouteManager->SetDNSSettings(group.routeConfigId, dnsSettingsGB->isChecked(), dnsSettingsWidget->GetDNSObject());
         RouteManager->SetAdvancedRouteSettings(group.routeConfigId, routeSettingsGB->isChecked(), routeSettingsWidget->GetRouteConfig());
     }
     if (current)
