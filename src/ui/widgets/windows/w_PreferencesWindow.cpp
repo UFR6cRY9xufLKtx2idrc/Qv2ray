@@ -239,7 +239,7 @@ PreferencesWindow::PreferencesWindow(QWidget *parent) : QvDialog("PreferenceWind
     //
     {
         dnsSettingsWidget = new DnsSettingsWidget(this);
-        dnsSettingsWidget->SetDNSObject(CurrentConfig.defaultRouteConfig.dnsConfig, CurrentConfig.defaultRouteConfig.fakeDNSConfig);
+        dnsSettingsWidget->SetDNSObject(CurrentConfig.defaultRouteConfig.dnsConfig);
         dnsSettingsLayout->addWidget(dnsSettingsWidget);
         //
         routeSettingsWidget = new RouteSettingsMatrixWidget(CurrentConfig.kernelConfig.AssetsPath(), this);
@@ -400,9 +400,8 @@ void PreferencesWindow::on_buttonBox_accepted()
         {
             NEEDRESTART
         }
-        const auto &[dns, fakedns] = dnsSettingsWidget->GetDNSObject();
+        const auto &[dns] = dnsSettingsWidget->GetDNSObject();
         CurrentConfig.defaultRouteConfig.dnsConfig = dns;
-        CurrentConfig.defaultRouteConfig.fakeDNSConfig = fakedns;
         if (!(CurrentConfig.defaultRouteConfig.dnsConfig == GlobalConfig.defaultRouteConfig.dnsConfig))
         {
             NEEDRESTART
