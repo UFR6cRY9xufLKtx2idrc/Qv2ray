@@ -19,7 +19,6 @@ namespace Qv2ray::base::config
         };
 
         QString domainStrategy;
-        QString domainMatcher = "mph";
         QvRouteConfig_Impl domains;
         QvRouteConfig_Impl ips;
         QvConfig_Route(){};
@@ -30,7 +29,6 @@ namespace Qv2ray::base::config
     };
 
     using QvConfig_DNS = objects::DNSObject;
-    using QvConfig_FakeDNS = objects::FakeDNSObject;
 
     struct QvConfig_Outbounds
     {
