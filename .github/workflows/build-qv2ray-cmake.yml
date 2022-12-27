@@ -28,8 +28,8 @@ jobs:
       matrix:
         platform: [windows-latest]
         arch: [x64]
-        build_type: [Release]
-        qt_version: [5.15.7]
+        build_type: [RelWithDebInfo, Release]
+        qt_version: [5.15.2]
         include:
           - platform: windows-latest
             arch: x64
@@ -207,7 +207,7 @@ jobs:
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
           file: build/Qv2ray.AppImage
-          asset_name: Qv2ray.${{ steps.get_version.outputs.VERSION }}.linux-${{ matrix.arch }}.AppImage
+          asset_name: Qv2ray.${{ steps.get_version.outputs.VERSION }}.Qt5.linux-${{ matrix.build_type }}.AppImage
           tag: ${{ github.ref }}
           overwrite: true
       # --------------------------------------------------------
@@ -223,7 +223,7 @@ jobs:
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
           file: Qv2ray.dmg
-          asset_name: Qv2ray.${{ steps.get_version.outputs.VERSION }}.macOS-${{ matrix.arch }}.dmg
+          asset_name: Qv2ray.${{ steps.get_version.outputs.VERSION }}.Qt5.macOS-${{ matrix.build_type }}.dmg
           tag: ${{ github.ref }}
           overwrite: true
       # --------------------------------------------------------
@@ -245,6 +245,6 @@ jobs:
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
           file: release.7z
-          asset_name: Qv2ray.${{ steps.get_version.outputs.VERSION }}.Windows-${{ matrix.arch }}.7z
+          asset_name: Qv2ray.${{ steps.get_version.outputs.VERSION }}.Qt5.Windows-${{ matrix.build_type }}.7z
           tag: ${{ github.ref }}
           overwrite: true
