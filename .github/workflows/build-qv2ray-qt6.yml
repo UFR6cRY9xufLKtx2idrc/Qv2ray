@@ -29,7 +29,7 @@ jobs:
         ui_type: [QWidget, QML]
         platform: [windows-latest]
         arch: [x64]
-        build_type: [Release]
+        build_type: [RelWithDebInfo, Release]
         qt_version: [6.4.1]
         include:
           - platform: windows-latest
@@ -207,7 +207,7 @@ jobs:
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
           file: build/Qv2ray.AppImage
-          asset_name: Qv2ray.${{ steps.get_version.outputs.VERSION }}.Qt6.Linux-${{ matrix.ui_type }}.AppImage
+          asset_name: Qv2ray.${{ steps.get_version.outputs.VERSION }}.Qt6.Linux-${{ matrix.ui_type }}-${{ matrix.build_type }}.AppImage
           tag: ${{ github.ref }}
           overwrite: true
       # --------------------------------------------------------
@@ -223,7 +223,7 @@ jobs:
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
           file: Qv2ray.dmg
-          asset_name: Qv2ray.${{ steps.get_version.outputs.VERSION }}.Qt6.macOS-${{ matrix.ui_type }}.dmg
+          asset_name: Qv2ray.${{ steps.get_version.outputs.VERSION }}.Qt6.macOS-${{ matrix.ui_type }}-${{ matrix.build_type }}.dmg
           tag: ${{ github.ref }}
           overwrite: true
       # --------------------------------------------------------
@@ -245,6 +245,6 @@ jobs:
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
           file: release.7z
-          asset_name: Qv2ray.${{ steps.get_version.outputs.VERSION }}.Qt6.Windows-${{ matrix.ui_type }}.7z
+          asset_name: Qv2ray.${{ steps.get_version.outputs.VERSION }}.Qt6.Windows-${{ matrix.ui_type }}-${{ matrix.build_type }}.7z
           tag: ${{ github.ref }}
           overwrite: true
