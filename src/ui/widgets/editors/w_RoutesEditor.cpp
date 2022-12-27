@@ -297,10 +297,13 @@ CONFIGROOT RouteEditor::OpenEditor()
     root["dns"] = GenerateDNS(dns);
     {
         // Process Browser Forwarder
-        QJsonObject browserForwarder;
-        browserForwarder["listenAddr"] = bfListenIPTxt->text();
-        browserForwarder["listenPort"] = bfListenPortTxt->value();
-        root["browserForwarder"] = browserForwarder;
+        if (!bfListenIPTxt->text().trimmed().isEmpty())
+        {
+            root["browserForwarder"] = QJsonObject{
+                { "listenAddr", bfListenIPTxt->text() },
+                { "listenPort", bfListenPortTxt->value() },
+            };
+        }
     }
     {
         // Process Observatory
