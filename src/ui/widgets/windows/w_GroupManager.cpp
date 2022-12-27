@@ -341,8 +341,8 @@ void GroupManager::on_buttonBox_accepted()
     if (currentGroupId != NullGroupId)
     {
         const auto routeId = ConnectionManager->GetGroupRoutingId(currentGroupId);
-        const auto &[dns, fakedns] = dnsSettingsWidget->GetDNSObject();
-        RouteManager->SetDNSSettings(routeId, dnsSettingsGB->isChecked(), dns, fakedns);
+        const auto &[dns] = dnsSettingsWidget->GetDNSObject();
+        RouteManager->SetDNSSettings(routeId, dnsSettingsGB->isChecked(), dns);
         RouteManager->SetAdvancedRouteSettings(routeId, routeSettingsGB->isChecked(), routeSettingsWidget->GetRouteConfig());
     }
     // Nothing?
@@ -405,8 +405,8 @@ void GroupManager::on_groupList_itemClicked(QListWidgetItem *item)
     // Load DNS / Route config
     const auto routeId = ConnectionManager->GetGroupRoutingId(currentGroupId);
     {
-        const auto &[overrideDns, dns, fakedns] = RouteManager->GetDNSSettings(routeId);
-        dnsSettingsWidget->SetDNSObject(dns, fakedns);
+        const auto &[overrideDns, dns] = RouteManager->GetDNSSettings(routeId);
+        dnsSettingsWidget->SetDNSObject(dns);
         dnsSettingsGB->setChecked(overrideDns);
         //
         const auto &[overrideRoute, route] = RouteManager->GetAdvancedRoutingSettings(routeId);
@@ -443,8 +443,8 @@ void GroupManager::on_groupList_currentItemChanged(QListWidgetItem *current, QLi
     if (priv)
     {
         const auto group = ConnectionManager->GetGroupMetaObject(currentGroupId);
-        const auto &[dns, fakedns] = dnsSettingsWidget->GetDNSObject();
-        RouteManager->SetDNSSettings(group.routeConfigId, dnsSettingsGB->isChecked(), dns, fakedns);
+        const auto &[dns] = dnsSettingsWidget->GetDNSObject();
+        RouteManager->SetDNSSettings(group.routeConfigId, dnsSettingsGB->isChecked(), dns);
         RouteManager->SetAdvancedRouteSettings(group.routeConfigId, routeSettingsGB->isChecked(), routeSettingsWidget->GetRouteConfig());
     }
     if (current)
